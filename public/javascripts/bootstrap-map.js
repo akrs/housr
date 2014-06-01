@@ -1,6 +1,6 @@
 var los_angeles_coordinates = [-118.25, 34.05];
 require([
-    "application/bootstrapmap",
+    "esri/map",
     "esri/layers/graphics",
     "esri/layers/FeatureLayer",
     "esri/InfoTemplate",
@@ -11,11 +11,11 @@ require([
     "dojo/domReady!",
     "dijit/form/ToggleButton"
   ],
-  function(BootstrapMap, Graphics, FeatureLayer, InfoTemplate, graphicsUtils, keys, on, dom) {
+  function(Map, Graphics, FeatureLayer, InfoTemplate, graphicsUtils, keys, on, dom) {
     "use strict"
 
     // Create map
-    var map = BootstrapMap.create("mapDiv", {
+    var map = new Map("mapDiv", {
       basemap: "streets",
       center: los_angeles_coordinates,
       zoom: 14

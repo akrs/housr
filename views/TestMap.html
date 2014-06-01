@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=7,IE=9">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
+  <title>Graphics</title>
+  <link rel="shortcut icon" href="http://esri.github.io/quickstart-map-js/images/favicon.ico">
+  <!-- ArcGIS API for JavaScript CSS-->
+  <link rel="stylesheet" href="http://js.arcgis.com/3.9/js/esri/css/esri.css">
+  <!-- Web Framework CSS - Bootstrap (getbootstrap.com) and Bootstrap-map-js (github.com/esri/bootstrap-map-js) -->
+  <link rel="stylesheet" type="text/css" href="http://js.arcgis.com/3.9/js/esri/css/esri.css">   
+  <link rel="stylesheet" type="text/css" href="http://esri.github.io/bootstrap-map-js/src/css/bootstrapmap.css">
+  <style>
+    html, body, #mapDiv {
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+
+  <!-- ArcGIS API for JavaScript library references -->
+  <script src="http://js.arcgis.com/3.9compact"></script>
+  <script>
+    require(["esri/map", 
+      "esri/geometry/Point", 
+      "esri/geometry/Multipoint", 
+      "esri/geometry/Polyline",
+      "esri/geometry/Polygon",
+      "esri/graphic", 
+      "esri/symbols/SimpleMarkerSymbol", 
+      "esri/symbols/SimpleLineSymbol", 
+      "esri/symbols/SimpleFillSymbol", 
+      "esri/InfoTemplate", 
+      "dojo/_base/Color", 
+      "dojo/query",
+      "dojo/on", 
+      "dojo/dom", 
+      "dojo/domReady!"], 
+      function(Map, Point, Multipoint, Polyline, Polygon, Graphic, SimpleMarkerSymbol, SimpleLineSymbol, SimpleFillSymbol, InfoTemplate, Color, query, on, dom) {
+        "use strict"
+
+        var pointSymbol,lineSymbol,polygonSymbol;
+        var multiPointGraphic,polylineGraphic,polygonGraphic, multiPoint;
+        var pts, activeToolId;
+   
+        // Create map
+        var map = new Map("mapDiv",{ 
+          basemap: "streets",
+          center: [-79.40, 43.55],
+          zoom: 9,
+        });
+    
+        // Create symbols for the graphics
+        pointSymbol = createPointSymbol();
+        lineSymbol = createLineSymbol();
+        polygonSymbol = createPolygonSymbol();
+
+        // Wire events
+        on(map,"click", addGraphicCallback);
+        on(map,"dbl-click", addGraphicCallback);  // double-click?
+        
+        // Wire UI events
+        on(dom.byId("addPoint"),"click", setActiveTool);
+        on(dom.byId("addLine"),"click", setActiveTool);
+        on(dom.byId("addPolygon"),"click", setActiveTool);
+        on(dom.byId("clear"),"click", setActiveTool);
+
+        function setActiveTool(e) {
+          var btn = e.target;
+          activeToolId = (btn ? btn.id : null);
+          // Lock map to digitize
+          if (btn) {
+            map.disableDoubleClickZoom();
+            map.disablePan();
+          } else { 
+            map.enableDoubleClickZoom();
+            map.enablePan();
+          }
+          // Set user message
+          switch (activeToolId) {
+            case "addPoint":
+              setMessage("Click the map to add a point");
+              break;
+            case "addLine":
+              setMessage("Click the map. Double-click to finish line.");
+              break;
+            case "addPolygon":
+              setMessage("Click the map. Double-click to finish polygon.");
+              break;
+            default:
+              setMessage("Click a button to start");
+              clearAddGraphics();  
+          }
+          setSelected(btn);
+        }
+
+        // Listen for mouse click events
+        function addGraphicCallback(evt) {
+          var pt = evt.mapPoint;
+          var finished = (evt.type == "dblclick" || evt.type == "touchend");
+          switch (activeToolId) {
+            case 'addPoint':
+              addPoint(pt, finished);
+              break;
+            case 'addLine':
+              addLine(pt, finished);
+              break;
+            case 'addPolygon':
+              addPolygon(pt, finished);
+              break;
+            default:
+          }
+          map.infoWindow.hide();
+        }
+
+        // Add point graphic
+        function addPoint(pt, finished) {
+          var attributes = {"Lat":pt.getLatitude().toFixed(2),"Lon":pt.getLongitude().toFixed(2)};
+          var infoTemplate = new InfoTemplate("My Point","Latitude: ${Lat} <br/>Longitude: ${Lon}");
+          var graphic = new Graphic(pt,pointSymbol,attributes,infoTemplate);
+          map.graphics.add(graphic);
+        }
+
+        // Add line graphic
+        function addLine(pt, finished) {
+          if (!pts) pts = [];
+          pts.push(pt);
+          // Add a temporary point
+          addTempPoint(pt);
+          // Create the line and graphic
+          if (pts.length > 1) {
+            var polyline = new Polyline(pt.spatialReference);
+            polyline.addPath(pts);
+            if (!polylineGraphic) {
+              polylineGraphic = new Graphic(polyline,lineSymbol);
+              map.graphics.add(polylineGraphic);
+            } else 
+              polylineGraphic.setGeometry(polyline);
+          }
+          if (finished && pts.length > 1) {
+            var infoTemplate = new InfoTemplate("My Line","Points: "+ pts.length);
+            polylineGraphic.setInfoTemplate(infoTemplate);
+            polylineGraphic = null;
+            map.graphics.remove(multiPointGraphic);
+            multiPointGraphic = null;
+            pts = null;
+            }
+          }
+
+          // Add polygon graphic
+          function addPolygon(pt, finished) {
+            if (!pts) pts = [];
+            pts.push(pt);
+            // Add a temporary point
+            addTempPoint(pt);  
+            // Create the polygon and graphic
+            if (pts.length > 1) {
+              if (finished && pts.length > 2) 
+              pts.push(pts[0]);  // Close the ring
+              var polygon = new Polygon(pt.spatialReference);
+              polygon.addRing(pts);
+              if (!polygonGraphic) {
+                polygonGraphic = new Graphic(polygon,polygonSymbol);
+                map.graphics.add(polygonGraphic);
+              }
+              else 
+                polygonGraphic.setGeometry(polygon);
+            }
+            if (finished && pts.length > 2) {
+              var infoTemplate = new InfoTemplate("My Polygon","Points: " + (pts.length -1));
+              polygonGraphic.setInfoTemplate(infoTemplate);
+              polygonGraphic = null;
+              map.graphics.remove(multiPointGraphic);
+              multiPointGraphic = null;
+              pts = null;
+            }
+          }
+
+        function addTempPoint(pt) {
+          if (!multiPointGraphic) {
+            multiPoint = new Multipoint(pt.spatialReference);
+            multiPoint.addPoint(pt);
+            multiPointGraphic = new Graphic(multiPoint,pointSymbol);
+            map.graphics.add(multiPointGraphic);
+          }
+          else {
+            multiPoint.addPoint(pt);
+            multiPointGraphic.setGeometry(multiPoint);
+          }
+        }
+        
+        function createPointSymbol() {
+          return new SimpleMarkerSymbol(SimpleMarkerSymbol.STYLE_SQUARE, 7,
+            new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID,
+            new Color([255, 0, 0]), 1),
+            new Color([255, 0, 0, 0.75])); 
+        }
+
+        function createLineSymbol() {
+          return new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, 
+            new Color([255, 0, 0, 0.75]), 
+            2);
+        }
+        
+        function createPolygonSymbol() {
+          return new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, 
+            new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, 
+            new Color([255, 0, 0, 0.75]), 1), new Color([255, 0, 0, 0.05]));  
+        }
+
+        function setSelected(button) {
+          query(".btn-group > .btn").removeClass("active");
+          query(button).addClass("active");
+        }
+
+        function setMessage(msg) {
+          var element = document.getElementById("userMessage");
+          element.innerHTML = msg;
+        }
+
+        function clearAddGraphics() {
+          map.infoWindow.hide();
+          map.graphics.clear();
+          multiPointGraphic = null;
+          polylineGraphic = null;
+          polygonGraphic = null;
+          pts = null;
+        }
+      }
+    );
+  </script>
+</head>
+<body>
+  <div class="panel panel-primary panel-fixed">
+    <div class="panel-heading">
+      <h3 class="panel-title">Draw Graphics</h3>
+    </div>
+    <div class="panel-body">
+      <div class="form-group">
+        <div class="btn-group">
+          <button class="btn btn-success" id="addPoint">Add Point</button>
+          <button class="btn btn-success" id="addLine">Add Line</button>
+          <button class="btn btn-success" id="addPolygon">Add Polygon</button>
+        </div>       
+      </div>
+      <p><button class="btn btn-default" id="clear">Clear</button></p>
+      <div id="userMessage">Click a button to start.</div>
+    </div>
+  </div>
+  <div id="mapDiv"></div>
+</body>
+</html>
