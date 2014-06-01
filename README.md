@@ -1,5 +1,4 @@
-housr
-=====
+![There was something wrong :(](https://raw.githubusercontent.com/akrs/housr/master/artwork/HouserIcon.jpg)
 
 According to the LA2050 Initiative, housing is central to a person's ability
 to meet basic life needs, but affordable housing is too difficult to obtain
@@ -18,3 +17,7 @@ Transportation, to calculate housing and transportation affordability.
 This project was made at Hack for LA.
 
 Here are some wireframes of the project.
+
+![There was something wrong :(](https://raw.githubusercontent.com/akrs/housr/master/artwork/GetAround.jpg)
+![There was something wrong :(](https://raw.githubusercontent.com/akrs/housr/master/artwork/LAMetro.jpg)
+![There was something wrong :(](https://raw.githubusercontent.com/akrs/housr/master/artwork/WorkAdress.jpg)
