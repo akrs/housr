@@ -7,7 +7,8 @@ require([
     "dojo/keys",
     "dojo/on",
     "dojo/dom",
-    "dojo/domReady!"
+    "dojo/domReady!",
+    "dijit/form/ToggleButton"
   ],
   function(BootstrapMap, Graphics, FeatureLayer, InfoTemplate, graphicsUtils, keys, on, dom) {
     "use strict"
@@ -28,16 +29,10 @@ require([
     // Wire map events
     // map.on("layer-add-result", layerAdded);
 
-    // Wire UI events
-    // on(dom.byId("btnAdd"), "click", addFeatureService);
-    // on(dom.byId("btnRemove"), "click", removeFeatureService);
-    on(dom.byId("inputUrl"), "keydown", function(event) {
-      if (event.keyCode === keys.ENTER) {
-        addFeatureService();
-      }
-    });
 
-    on(dom.byId("coffee-layer"), "click", toggleCoffeeService);
+    $("#coffee-layer").click(toggleCoffeeService);
+    $("#lai-layer").click(toggleLaiService);
+    // on(dom.byId("coffee-layer"), "click", toggleCoffeeService);
     // on(dom.byId("lai-layer"), "click", addLaiService);
     // on(dom.byId("metro-layer"), "click", addMetroService);
 
@@ -53,7 +48,7 @@ require([
     var on = false;
     var coffeeURL = "http://services3.arcgis.com/7LJujXVDAGlq47mO/arcgis/rest/services/Portland_Coffee_Shops/FeatureServer/0",
         laiURL = "http://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/LocationAffordabilityIndexData/FeatureServer/0",
-        metroURL = "";
+        metroURL = "http://services3.arcgis.com/EWU1UBZxjEWlgj4C/ArcGIS/rest/services/Los_Angeles_County_Metro_Bus_Routes/FeatureServer/0";
     var coffeeFeatureLayer = createFeatureLayer(coffeeURL),
         laiFeatureLayer = createFeatureLayer(laiURL),
         metroFeatureLayer = createFeatureLayer(metroURL);
@@ -61,22 +56,30 @@ require([
     // Create a feature layer to get feature service
 
     function toggleCoffeeService() {
-      if (on) {
-        removeFeatureService(coffeeFeatureLayer);
+      toggleService("#coffee-layer", coffeeFeatureLayer);
+    }
+
+    function toggleLaiService() {
+      toggleService("#lai-layer", laiFeatureLayer);
+    }
+
+
+    function toggleService(divId, featureLayer) {
+      if ($(divId).hasClass("active")) {
+        removeFeatureService(featureLayer);
       } else {
-        addFeatureService(coffeeFeatureLayer);
+        addFeatureService(featureLayer);
       }
+      $(divId).toggleClass("active");
     }
 
     function addFeatureService(featureLayer) {
-      on = true;
       console.log("adding feature layer");
       map.addLayer(featureLayer);
     }
 
     // Remove existing service
     function removeFeatureService(featureLayer) {
-      on = false;
       console.log("removing feature layer");
       map.removeLayer(featureLayer);
       map.infoWindow.hide();
