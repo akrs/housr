@@ -88,7 +88,7 @@ require([
     }
 
     var semiTransparent = {
-      opacity: .25
+      opacity: .4
     }
 
     var coffeeURL = "http://services3.arcgis.com/7LJujXVDAGlq47mO/arcgis/rest/services/Portland_Coffee_Shops/FeatureServer/0",
