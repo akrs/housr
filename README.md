@@ -16,7 +16,7 @@ Transportation, to calculate housing and transportation affordability.
 
 This project was made at Hack for LA.
 
-Here are some wireframes of the project.
+Here are some screenshots of the project.
 
 ![There was something wrong :(](https://raw.githubusercontent.com/akrs/housr/master/artwork/GetAround.jpg)
 ![There was something wrong :(](https://raw.githubusercontent.com/akrs/housr/master/artwork/LAMetro.jpg)
