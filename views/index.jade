@@ -1,15 +1,14 @@
 extends layout
 
 block content
-  h1= title
-  p Welcome to #{title}
-  div.container(style="padding:15px;")
+  div.container
     div.row
       div.col-xs-8
         div#mapDiv
       div.col-xs-4
-        h5 Load Feature Service
-        p What is important to your life?
+        h1= title
+        p Welcome to #{title}
+        h3 What is important to your life?
         div
           button#coffee-layer.btn.btn-primary.btn-lg Coffee
         div
