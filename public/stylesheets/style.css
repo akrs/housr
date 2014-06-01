@@ -5,7 +5,3 @@ body {
 a {
   color: #00b7ff;
 }
-#mapDiv {
-  min-height:100px;
-  max-height:500px;
-}

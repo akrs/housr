@@ -15,8 +15,8 @@ require([
     // Create map
     var map = BootstrapMap.create("mapDiv", {
       basemap: "streets",
-      center: [-28,40],
-      zoom: 3
+      center: [-122.68, 45.52],
+      zoom: 14
     });
 
     // Set popup
@@ -26,60 +26,59 @@ require([
     popup.domNode.style.marginTop = "-5px";
 
     // Wire map events
-    map.on("layer-add-result", layerAdded);
+    // map.on("layer-add-result", layerAdded);
 
     // Wire UI events
-    on(dom.byId("btnAdd"), "click", addFeatureService);
-    on(dom.byId("btnRemove"), "click", removeFeatureService);
+    // on(dom.byId("btnAdd"), "click", addFeatureService);
+    // on(dom.byId("btnRemove"), "click", removeFeatureService);
     on(dom.byId("inputUrl"), "keydown", function(event) {
       if (event.keyCode === keys.ENTER) {
         addFeatureService();
       }
     });
 
-    var featureLayer;
+    on(dom.byId("coffee-layer"), "click", toggleCoffeeService);
+    // on(dom.byId("lai-layer"), "click", addLaiService);
+    // on(dom.byId("metro-layer"), "click", addMetroService);
 
-    // Create a feature layer to get feature service
-    function addFeatureService() {
-      removeFeatureService();
+    function createFeatureLayer (url) {
       var infoTemplate = new InfoTemplate("Feature Data", "${*}");
-      var url = dom.byId("inputUrl").value.trim();
-      featureLayer = new FeatureLayer(url, {
+      return new FeatureLayer(url, {
         mode: FeatureLayer.MODE_ONDEMAND,
         outFields: ["*"],
         infoTemplate: infoTemplate
       });
-      map.addLayer(featureLayer);
+    }
 
-    }
-    // Remove existing service
-    function removeFeatureService() {
-      if (featureLayer) {
-        map.removeLayer(featureLayer);
-        map.infoWindow.hide();
-      }
-    }
-    // Listen for enter key
-    function addService_onKeyPress(e) {
-      if (e.keyCode == 13 || e.keyCode == "13") {
-        addFeatureService();
-      }
-    }
-    // Zoom to layer and update url
-    function layerAdded(layer) {
-      if (typeof layer.error !== 'undefined') {
-        alert("Feature service could not be loaded. Check URL.");
+    var on = false;
+    var coffeeURL = "http://services3.arcgis.com/7LJujXVDAGlq47mO/arcgis/rest/services/Portland_Coffee_Shops/FeatureServer/0",
+        laiURL = "http://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/LocationAffordabilityIndexData/FeatureServer/0",
+        metroURL = "";
+    var coffeeFeatureLayer = createFeatureLayer(coffeeURL),
+        laiFeatureLayer = createFeatureLayer(laiURL),
+        metroFeatureLayer = createFeatureLayer(metroURL);
+
+    // Create a feature layer to get feature service
+
+    function toggleCoffeeService() {
+      if (on) {
+        removeFeatureService(coffeeFeatureLayer);
       } else {
-        if (featureLayer){
-          var layerUpdated = featureLayer.on("update-end", function(result) {
-            // Zoom to all of the features
-            var extent = graphicsUtils.graphicsExtent(result.target.graphics);
-            map.setExtent(extent);
-            // Only do this once
-            layerUpdated.remove();
-            dom.byId("inputUrl").value = result.target.url;
-          });
-        }
+        addFeatureService(coffeeFeatureLayer);
       }
+    }
+
+    function addFeatureService(featureLayer) {
+      on = true;
+      console.log("adding feature layer");
+      map.addLayer(featureLayer);
+    }
+
+    // Remove existing service
+    function removeFeatureService(featureLayer) {
+      on = false;
+      console.log("removing feature layer");
+      map.removeLayer(featureLayer);
+      map.infoWindow.hide();
     }
 });
